@@ -3,7 +3,7 @@
 
 int load_data() inline {
   slice ds = get_data().begin_parse();
-  return ds~load_init(64);
+  return ds~load_uint(64);
 }
 
 () save_data(int res) impure {
@@ -11,7 +11,7 @@ int load_data() inline {
     begin_cell()
       .store_uint(res, 64)
     .end_cell()
-  )
+  );
 }
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
@@ -28,4 +28,10 @@ int load_data() inline {
   int res = load_data();
   int num = in_msg_body~load_uint(32);
   res += num;
+
+  save_data(res);
+}
+
+int get_res() method_id {
+  return load_data();
 }

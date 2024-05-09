@@ -1,9 +1,11 @@
 import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, Sender, SendMode } from '@ton/core';
 
-export type MainConfig = {};
+export type MainConfig = {
+    res: number
+};
 
 export function mainConfigToCell(config: MainConfig): Cell {
-    return beginCell().endCell(); //storage (c4)
+    return beginCell().storeUint(config.res, 64).endCell(); //storage (c4)
 }
 
 export class Main implements Contract {
@@ -25,5 +27,10 @@ export class Main implements Contract {
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell().endCell(),
         });
+    }
+
+    async getCurrentResValue(provider: ContractProvider) {
+        const result = await provider.get('get_res', []);
+        return result.stack.readNumber();
     }
 }
