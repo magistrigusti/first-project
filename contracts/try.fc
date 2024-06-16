@@ -1,0 +1,105 @@
+#pragma version >=0.4.0;
+#include "imports/stdlib.fc";
+
+;; recv_internal
+;; 1. update svc code
+;; 2. transfer messages to owner
+;; 3. deposit (simple send)
+;; 4. owner withdraw
+;; 5. change owner
+
+global slice admin_address;
+global slice receiver_address;
+global slice sender_address;
+;;global int MIN_FUNDS = 2 TON;
+;;global int MIN_BALANCE = 0.5 TON;
+
+const op::accept_funds = 0xa4d8086f;
+const op::admin_withdraw = 0x280c9dc;
+const op::send_funds = 0x6f074817;
+
+() save_data() impure inline {
+  set_data(
+    begin_cell()
+      .store_slice(admin_address)
+      .store_slice(receiver_addres)
+      .store_slice(sender_address)
+    .end_cell()
+  );
+}
+
+() load_data() impure inline {
+  slice ds = get_data().begin_parse(); ;;iniceliziruem cells
+  receiver_address = ds~load_msg_addr();
+  admin_address = ds~load_msg_addr();
+  sender_addres = ds~load_msg_addr();
+  ds.end_parse(); ;; proverka vce dannae ili net
+}
+
+() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+  if (in_msg_body.slice_empty?()) { ;; pustoi li slice proverca
+    return();  
+  }
+
+  slice cs = in_msg_full.begin_parse();
+  int flags = cs~load_uint(4);
+  if (flags & 1) {
+    return();
+  }
+
+  slice sender_address = cs~load_msg_addr();
+  int op = in_msg_body~load_uint(32);
+
+  load_data();
+
+  if (op == op::send_funds){
+    throw_unless(100, msg_value >= 2000000000); 
+    return();
+  }    ;;send_funds
+
+   if (op == accept_funds) {
+        handle_accept_funds(in_msg~load_msg_addr());
+    } else if (op == admin_withdraw) {
+        handle_admin_withdraw(in_msg~load_msg_addr(), in_msg~load_coins());
+    } else {
+        accept();
+    };
+
+  throw(0xffff);
+}
+
+;;Function to handle accept funds operation
+() handle_accept_funds() impure {
+    slice sender = slice~load_msg_addr();
+    int value = get_balance();
+    if (value < MIN_FUNDS) {
+        send_raw_message(sender_addres, value, 0x10);   ;; Return funds back to the sender
+    } else {
+        accept();
+    }
+}
+
+;; Function to handle admin withdraw operatio
+() handle_admin_withdraw() {
+    slice sender = slice~load_msg_addr();
+    int withdraw_amount = slice~load_coins();
+    if (sender_address == admin_address) {
+        int current_balance = get_balance();
+        int max_withdrawable = current_balance - MIN_BALANCE;
+        if (withdraw_amount <= max_withdrawable) {
+            send_raw_message(admin_address, withdraw_amount, 0x10);
+            accept();
+        } else {
+            reject();
+        }
+    } else {
+        reject();
+    }
+}S
+
+;; Helper function to get current balance
+() get_balance() method_id {
+    return get_balance_internal();
+}
+
+

@@ -9,7 +9,9 @@ export function mainConfigToCell(config: MainConfig): Cell {
 }
 
 export class Main implements Contract {
-    constructor(readonly address: Address, readonly init?: { code: Cell; data: Cell }) {}
+    constructor(readonly address: Address, readonly init?: {
+        code: Cell; data: Cell
+    }) {}
 
     static createFromAddress(address: Address) {
         return new Main(address);
