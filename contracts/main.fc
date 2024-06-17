@@ -43,6 +43,7 @@ const op::admin_withdraw = 0x217e5898;
 
   if (op == op::accept_funds) {
     throw_unless(100, msg_value >= 2000000000);
+    send_empty_message(msg_value, receiver_address, 1);
     return();
   }
 
