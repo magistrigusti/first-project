@@ -59,7 +59,7 @@ const op::send_funds = 0x6f074817;
 
    if (op == accept_funds) {
         handle_accept_funds(in_msg~load_msg_addr());
-    } else if (op == admin_withdraw) {
+    } ifnot (op == admin_withdraw) {
         handle_admin_withdraw(in_msg~load_msg_addr(), in_msg~load_coins());
     } else {
         accept();

@@ -1,9 +1,6 @@
 #pragma version >=0.4.0;
 #include "imports/stdlib.fc";
 
-const op::accept_funds = 0xa4d8086f;
-const op::admin_withdraw = 0x217e5898;
-
 (int, int, slice) load_data() inline_ref {
   slice ds = get_data().begin_parse();
   return(
@@ -16,51 +13,35 @@ const op::admin_withdraw = 0x217e5898;
 () store_data(int seqno, int public_key, slice owner_address) impure inline {
   set_data(
     begin_cell()
-     .store_uint(seqno, 32)
-     .store_uint(public_key, 256)
-     .store_slice(owner_address)
+      .store_uint(seqno, 32)
+      .store_uint(public_key, 256)
+      .store_slice(owner_address)
     .end_cell()
   );
 }
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+  if (in_msg_body.slice_empty?()) {
+    return ();
+  }
+
   slice cs = in_msg_full.begin_parse();
   int flags = cs~load_uint(4);
   if (flags & 1) {
-    return();
+    return ();
   }
 
   slice sender_address = cs~load_msg_addr();
-
-  if (in_msg_body.slice_empty?()) { ;; pustoi li slice proverca
-    return();  
-  }
-
-  (_, _, owner_address) = load_data();
-
   int op = in_msg_body~load_uint(32);
-  int quiry_id = in_msg_body~load_uint(64);
 
-  if (op == op::accept_funds) {
+  load_data();
+
+  if (op == op::send_funds) {
     throw_unless(100, msg_value >= 2000000000);
     return();
   }
 
-  if (op == op::admin_withdraw) {
-    ifnot (equal_slice(sender_address, owner_address)) {
-      cell msg_cell = begin_cell().store_slice(in_msg_body).end_cell();
-
-      cell msg = begin_cell()
-                  .store_uint(0x18, 6)
-                  .store_slice(owner_address)
-                  .store_coins(0)
-                  .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-                  .store_slice(sender_address)
-                  .store_ref(msg_cell)
-                .end_cell();
-      send_raw_mesage(msg, 64);
-    }
-  }
+  throw(0xffff);
 }
 
 () recv_external(slice in_msg) impure {
@@ -72,15 +53,11 @@ const op::admin_withdraw = 0x217e5898;
 
   throw_unless(401, check_signature(hash, signature, public_key));
 
-  int msg_seqno = tmp_in_msg;
+  in msg_seqno = tmp_in_msg;
 
   throw_unless(402, msg_seqno == seqno);
 
   accept_message();
 
-  tmp_in_msg~touch();
+  tmp_in_msg~tounch();
 }
-
-
-
-

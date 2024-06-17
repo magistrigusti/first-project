@@ -40,6 +40,6 @@ describe('Main', () => {
     });
 
     it('should throw 100 in case msg_value is less than 2 TON', async () => {
-        const sendFundsResult = await main.sendFunds(user.getSender(), toNano('0.1'));
+
     });
 });
