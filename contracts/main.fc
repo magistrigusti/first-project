@@ -1,8 +1,10 @@
 #pragma version >=0.4.0;
 #include "imports/stdlib.fc";
 
+const op::deposit = 0x95db9d39;
 const op::accept_funds = 0xa4d8086f;
 const op::admin_withdraw = 0x217e5898;
+const op::transfer_msg_to_owner = 0xdb9b8933;
 
 (int, int, slice) load_data() inline_ref {
   slice ds = get_data().begin_parse();
@@ -41,13 +43,17 @@ const op::admin_withdraw = 0x217e5898;
   int op = in_msg_body~load_uint(32);
   int quiry_id = in_msg_body~load_uint(64);
 
+  if (op == op::deposit) {
+    return();  ;; prinimait money and saverhaen contract
+  }
+
   if (op == op::accept_funds) {
     throw_unless(100, msg_value >= 2000000000);
     send_empty_message(msg_value, receiver_address, 1);
     return();
   }
 
-  if (op == op::admin_withdraw) {
+  if (op == op::transfer_msg_to_owner) {
     ifnot (equal_slice(sender_address, owner_address)) {
       cell msg_cell = begin_cell().store_slice(in_msg_body).end_cell();
 

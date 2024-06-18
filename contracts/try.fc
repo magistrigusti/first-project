@@ -95,7 +95,7 @@ const op::send_funds = 0x6f074817;
     } else {
         reject();
     }
-}S
+}
 
 ;; Helper function to get current balance
 () get_balance() method_id {
