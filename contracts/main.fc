@@ -72,7 +72,9 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
   }
 
   if (op == op::admin_withdraw) {
-    
+    int withdraw_amount = in_msg_body~load_coins();
+
+    throw_unless(912, my_balance >= withdraw_amount);
   }
 }
 
