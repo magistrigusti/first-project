@@ -1,6 +1,8 @@
 #pragma version >=0.4.0;
 #include "imports/stdlib.fc";
 
+const int min_tons_for_storage = 500000000;
+
 const op::deposit = 0x95db9d39;
 const op::accept_funds = 0xa4d8086f;
 const op::admin_withdraw = 0x217e5898;
@@ -67,6 +69,10 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
                 .end_cell();
       send_raw_mesage(msg, 64);
     }
+  }
+
+  if (op == op::admin_withdraw) {
+    
   }
 }
 
