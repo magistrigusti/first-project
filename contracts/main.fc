@@ -96,6 +96,8 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
     throw(0);
   }
+
+  throw(0xffffff);
 }
 
 () recv_external(slice in_msg) impure {
