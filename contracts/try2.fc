@@ -50,6 +50,34 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
   }
 
   if (op == op::accept_funds) {
-    throw_unless(1)
+    throw_unless(900, msg_value >= 2000000000);
+    send_empty_message(msg_value, receiver_address, 1);
+    return();
+  }
+
+  if(op == op::transfer_msg_to_owner) {
+    ifnot (equal_slice(sender_address, owner_address)) {
+      cell msg_cell = begin_cell().store_slice(in_msg_body).end_cell();
+
+      cell msg = begin_cell()
+                  .store_uint(0x18, 6)
+                  .store_slice(owner_address)
+                  .store_coins(0)
+                  .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+                  .store_slice(sender_address)
+                  .store_ref(msg_cell)
+                .end_cell();
+      send_raw_message(msg, 64);
+    }
+  }
+
+  if (op == op::admin_withdraw) {
+    int withdraw_amount = in_msg_body~load_coins();
+
+    throw_unless(912, my_balance >= withdraw_amount);
+
+    int send_amount = min(withdraw_amount, my_balance - min_tons_for_storage);
+
+    cell
   }
 }
