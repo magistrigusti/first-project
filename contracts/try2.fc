@@ -10,10 +10,10 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
 (int, int, slice) load_data() inline_ref {
   slice ds = get_data().begin_parse();
-  return (
+  return(
     ds~load_uint(32),
     ds~load_uint(256),
-    ds~load_msg_addr
+    ds~load_msg_addr()
   );
 }
 
@@ -22,13 +22,13 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
     begin_cell()
       .store_uint(seqno, 32)
       .store_uint(public_key, 256)
-      store_slice(owner_address)
+      .store_slice(owner_address)
     .end_cell()
   );
 }
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
-  slice cd = in_msg_full.begin_parse();
+  slice cs = in_msg_full.begin_parse();
   int flags = cs~load_uint(4);
   if (flags & 1) {
     return();
@@ -50,12 +50,12 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
   }
 
   if (op == op::accept_funds) {
-    throw_unles(100, msg_value >= 2000000000);
-    send_empty_mesage(msg_value, receiver_address, 1);
+    throw_unless(100, msg_value >= 2000000000);
+    send_empty_message(msg_value, receiver_address, 1);
     return();
   }
 
-  if (op == op::tranfer_msg_to_owner) {
+  if (op == op::transfer_msg_to_owner) {
     ifnot (equal_slice(sender_address, owner_address)) {
       cell msg_cell = begin_cell().store_slice(in_msg_body).end_cell();
 
@@ -63,6 +63,7 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
                   .store_uint(0x18, 6)
                   .store_slice(owner_address)
                   .store_coins(0)
+                  .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
                   .store_slice(sender_address)
                   .store_ref(msg_cell)
                 .end_cell();
@@ -70,25 +71,34 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
     }
   }
 
-  if (op = op::admin_witndraw) {
+  if (op == op::admin_withdraw) {
     int withdraw_amount = in_msg_body~load_coins();
 
     throw_unless(912, my_balance >= withdraw_amount);
+
+    int sebd_amount = min(withdraw_amount, my_balance - min_tons_for_storage);
+
+    cell msg = begin_cell()
+                .store_uint(0x18, 6)
+                .store_slice(owner_address)
+                .store_coins(send_amount)
+                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+              .ens_cell();
   }
 }
 
 () recv_external(slice in_msg) impure {
-  var signature = in_msg~load_bits(512);
-  slice temp_in_msg;
+  var signature = in_msg_~load_bits(512);
+  slice tmp_in_msg = in_msg;
   var hash = slice_hash(in_msg);
 
-  (int seqno, int public_key, slice owner_address) = load_data();
+  (int seno, int public_key, slice owner_address) = load_data();
 
-  throw_unless(901, check_signature(hash, signature, publick_key));
+  throw_unless(901, check_signature(hash, signature, public_key));
 
   int msg_seqno = tmp_in_msg;
 
-  throw_unless(902, msg_seqno = seqno);
+  throw_unless(902, msg_seqno);
 
   accept_message();
 

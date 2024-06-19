@@ -84,6 +84,7 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
                 .store_coins(send_amount)
                 .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
               .end_cell();
+    send_raw_message(msg, 1);
   }
 }
 
