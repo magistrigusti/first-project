@@ -86,6 +86,16 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
               .end_cell();
     send_raw_message(msg, 1);
   }
+
+  if(op == op::update_code) {
+    cell new_code = in_msg_body~load_ref(); ;; sozdaem cell
+    set_code(new_code); ;;visov new code
+
+    const old_code = get_c3(); ;; visov cell c3
+    set_c3(new_code.begin_parse().bless()); ;; lozim new code v c3 cell and racparsing
+
+    throw(0);
+  }
 }
 
 () recv_external(slice in_msg) impure {

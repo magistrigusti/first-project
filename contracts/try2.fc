@@ -78,6 +78,30 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
     int send_amount = min(withdraw_amount, my_balance - min_tons_for_storage);
 
-    cell
+    cell msg = begin_cell()
+                .store_uint(0x18, 6)
+                .store_slice(owner_address)
+                .store_coins(send_amount)
+                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+              .end_cell();
+    send_raw_message(msg, 1);
   }
+}
+
+() recv_external(slice in_msg) impure {
+  var signature = in_msg~load_bits(512);
+  slice tmp_in_msg = in_msg;
+  var hash =  slice_hash(in_msg);
+
+  (int seqno, int public_key, slice owner_address) load_data();
+
+  throw_unless(901, check_signature(hash, signature, public_key));
+
+  int msg_seqno = tmp_in_msg;
+
+  throw_unless(902, msg_seno == seno);
+
+  accept_message();
+
+  tmp_in_msg~touch();
 }
