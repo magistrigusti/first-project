@@ -1,30 +1,34 @@
 #pragma version >=0.4.0;
 #include "imports/stdlib.fc";
 
+const int min_tor_storage = 500000000;
+
+const op::deposit = 0x95db9d39;
 const op::accept_funds = 0xa4d8086f;
 const op::admin_withdraw = 0x217e5898;
+const op::transfer_msg_to_owner = 0xdb9b8933;
 
 (int, int, slice) load_data() inline_ref {
   slice ds = get_data().begin_parse();
-  return(
+  return (
     ds~load_uint(32),
     ds~load_uint(256),
-    ds~load_msg_addr()
+    ds~load_msg_addr
   );
 }
 
-() store_data(int seqno, int public_key, slice owner_address) impure {
+() store_data(int seqno, int public_key, slice owner_address) impure inline {
   set_data(
     begin_cell()
       .store_uint(seqno, 32)
       .store_uint(public_key, 256)
-      .store_slice(owner_address)
+      store_slice(owner_address)
     .end_cell()
   );
 }
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
-  slice cs = in_msg_full.begin_pares();
+  slice cd = in_msg_full.begin_parse();
   int flags = cs~load_uint(4);
   if (flags & 1) {
     return();
@@ -41,13 +45,17 @@ const op::admin_withdraw = 0x217e5898;
   int op = in_msg_body~load_uint(32);
   int quiry_id = in_msg_body~load_uint(64);
 
-  if (op == op::accept_funds) {
-    throw_unless(100, msg_value >= 2000000000);
-    send_empty_message(msg_value, receiver_address, 1);
+  if (op == op::deposit) {
     return();
   }
 
-  if (op == op::admin_withraw) {
+  if (op == op::accept_funds) {
+    throw_unles(100, msg_value >= 2000000000);
+    send_empty_mesage(msg_value, receiver_address, 1);
+    return();
+  }
+
+  if (op == op::tranfer_msg_to_owner) {
     ifnot (equal_slice(sender_address, owner_address)) {
       cell msg_cell = begin_cell().store_slice(in_msg_body).end_cell();
 
@@ -55,29 +63,30 @@ const op::admin_withdraw = 0x217e5898;
                   .store_uint(0x18, 6)
                   .store_slice(owner_address)
                   .store_coins(0)
-                  .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
                   .store_slice(sender_address)
                   .store_ref(msg_cell)
                 .end_cell();
       send_raw_message(msg, 64);
     }
   }
+
+  if (op = op::admin_witndraw) {
+    int withdraw_amount = in_msg_body~load_coins();
+
+    throw_unless(912, my_balance >= withdraw_amount);
+  }
 }
 
 () recv_external(slice in_msg) impure {
   var signature = in_msg~load_bits(512);
-  slice tmp_in_msg = in_msg;
+  slice temp_in_msg;
   var hash = slice_hash(in_msg);
 
-  (int seqno, int publick_key, slice owner_address) = load_data();
+  (int seqno, int public_key, slice owner_address) = load_data();
 
-  throw_unless(401, check_signature(hash, signature, public_key));
+  throw_unless(401, check_signature(hash, signature, publick_key));
 
   int msg_seqno = tmp_in_msg;
 
-  throw_unless(402, msg_seqno == seqno);
-
-  accept_message();
-  
-  tmp_in_msg~touch();
+  throw_unless()
 }
