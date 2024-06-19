@@ -84,9 +84,13 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
   (int seqno, int public_key, slice owner_address) = load_data();
 
-  throw_unless(401, check_signature(hash, signature, publick_key));
+  throw_unless(901, check_signature(hash, signature, publick_key));
 
   int msg_seqno = tmp_in_msg;
 
-  throw_unless()
+  throw_unless(902, msg_seqno = seqno);
+
+  accept_message();
+
+  tmp_in_msg~touch();
 }

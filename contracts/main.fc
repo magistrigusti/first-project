@@ -75,6 +75,15 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
     int withdraw_amount = in_msg_body~load_coins();
 
     throw_unless(912, my_balance >= withdraw_amount);
+
+    int send_amount = min(withdraw_amount, my_balance - min_tons_for_storage);
+
+    cel msg = begin_cell()
+                .store_uint(0x18, 6)
+                .store_slice(owner_address)
+                .store_coins(send_amount)
+                .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+              .end_cell();
   }
 }
 
