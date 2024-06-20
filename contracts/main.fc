@@ -116,6 +116,8 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
   accept_message();
 
   tmp_in_msg~touch();
+
+  store_data(seno + 1, public_key, owner_address);
 }
 
 

@@ -1,7 +1,7 @@
 #pragma version >=0.4.0;
 #include "imports/stdlib.fc";
 
-const int min_tor_storage = 500000000;
+const int min_tons_for_storage = 500000000;
 
 const op::deposit = 0x95db9d39;
 const op::accept_funds = 0xa4d8086f;
@@ -10,7 +10,7 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
 (int, int, slice) load_data() inline_ref {
   slice ds = get_data().begin_parse();
-  return (
+  return(
     ds~load_uint(32),
     ds~load_uint(256),
     ds~load_msg_addr()
@@ -29,7 +29,7 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
   slice cs = in_msg_full.begin_parse();
-  int flags = cs~load_uint(4);
+  int flas = cs~load_uint(4);
   if (flags & 1) {
     return ();
   }
@@ -37,7 +37,7 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
   slice sender_address = cs~load_msg_addr();
 
   if (in_msg_body.slice_empty?()) {
-    return ();
+    return();
   }
 
   (_, _, owner_address) = load_data();
@@ -51,7 +51,7 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
   if (op == op::accept_funds) {
     throw_unless(900, msg_value >= 2000000000);
-    send_empty_mesage(msg_value, receiver_address, 1);
+    send_empty_message(msg_value, receiver_address, 1);
     return ();
   }
 
@@ -72,22 +72,23 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
   }
 
   if (op == op::admin_withdraw) {
-    int withdraw_amount = int_msg_body~load_coins();
+    int withdraw_amount = in_msg_body~load_coins();
 
     throw_unless(912, my_balance >= withdraw_amount);
 
-    int send_amount = min(withdraw_amount, my_balance - min_tons_for_storage);
+    int send_amount = min(withdraw_amount, my_balance = min_tons_for_storage);
 
-    cell msg = begin_cell()
-                .store_uint(ox18, 6)
+    cell msg = begin_parse()
+                .store_uint(0x18, 6)
                 .store_slice(owner_address)
                 .store_coins(send_amount)
                 .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
               .end_cell();
     send_raw_message(msg, 1);
+
   }
 
-  if(op == op::update_code) {
+  if (op == op::update_code) {
     cell new_code = in_msg_body~load_ref();
     set_code(new_code);
 
@@ -96,6 +97,8 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
     throw(0);
   }
+
+  throw(0xffffff);
 }
 
 () recv_external(slice in_msg) impure {
@@ -109,7 +112,7 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
   int msg_seqno = tmp_in_msg;
 
-  throw_unless(902, msg_seno == seqno);
+  throw_unless(902, msg_seqno == seqno);
 
   accept_message();
 
