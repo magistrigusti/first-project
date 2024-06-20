@@ -120,6 +120,16 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
   store_data(seno + 1, public_key, owner_address);
 }
 
+int get_seqno() method_id {
+  (int seqno, _, _) = load_data();
+  return seqno;
+}
+
+slice get_owner() method_id {
+  (_, _, slice owner_address) = load_data();
+  return owner_address;
+}
+
 
 
 
