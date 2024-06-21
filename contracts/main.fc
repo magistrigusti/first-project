@@ -4,9 +4,10 @@
 const int min_tons_for_storage = 500000000;
 
 const op::deposit = 0x95db9d39;
-const op::accept_funds = 0xa4d8086f;
+
 const op::admin_withdraw = 0x217e5898;
 const op::transfer_msg_to_owner = 0xdb9b8933;
+const op::update_code = 0xa3796707;
 
 (int, int, slice) load_data() inline_ref {
   slice ds = get_data().begin_parse();
@@ -40,7 +41,7 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
     return();  
   }
 
-  (_, _, owner_address) = load_data();
+  (int seqno, int public_key, slice owner_address) = load_data();
 
   int op = in_msg_body~load_uint(32);
   int quiry_id = in_msg_body~load_uint(64);
@@ -49,14 +50,10 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
     return();  ;; prinimait money and saverhaen contract
   }
 
-  if (op == op::accept_funds) {
-    throw_unless(900, msg_value >= 2000000000);
-    send_empty_message(msg_value, receiver_address, 1);
-    return();
-  }
+
 
   if (op == op::transfer_msg_to_owner) {
-    ifnot (equal_slice(sender_address, owner_address)) {
+    ifnot (equal_slices(sender_address, owner_address)) {
       cell msg_cell = begin_cell().store_slice(in_msg_body).end_cell();
 
       cell msg = begin_cell()
@@ -67,7 +64,7 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
                   .store_slice(sender_address)
                   .store_ref(msg_cell)
                 .end_cell();
-      send_raw_mesage(msg, 64);
+      send_raw_message(msg, 64);
     }
   }
 
@@ -91,7 +88,7 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
     cell new_code = in_msg_body~load_ref(); ;; sozdaem cell
     set_code(new_code); ;;visov new code
 
-    const old_code = get_c3(); ;; visov cell c3
+    cont old_code = get_c3(); ;; visov cell c3
     set_c3(new_code.begin_parse().bless()); ;; lozim new code v c3 cell and racparsing
 
     throw(0);
@@ -109,15 +106,14 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
   throw_unless(901, check_signature(hash, signature, public_key));
 
-  int msg_seqno = tmp_in_msg;
+  int msg_seqno = tmp_in_msg~load_uint(32);
 
   throw_unless(902, msg_seqno == seqno);
 
   accept_message();
-
   tmp_in_msg~touch();
 
-  store_data(seno + 1, public_key, owner_address);
+  store_data(seqno + 1, public_key, owner_address);
 }
 
 int get_seqno() method_id {
@@ -129,6 +125,7 @@ slice get_owner() method_id {
   (_, _, slice owner_address) = load_data();
   return owner_address;
 }
+
 
 
 

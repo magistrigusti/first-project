@@ -4,9 +4,10 @@
 const int min_tons_for_storage = 500000000;
 
 const op::deposit = 0x95db9d39;
-const op::accept_funds = 0xa4d8086f;
+
 const op::admin_withdraw = 0x217e5898;
 const op::transfer_msg_to_owner = 0xdb9b8933;
+const op::update_code = 0xa3796707;
 
 (int, int, slice) load_data() inline_ref {
   slice ds = get_data().begin_parse();
@@ -20,9 +21,9 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 () store_data(int seqno, int public_key, slice owner_address) impure inline {
   set_data(
     begin_cell()
-      .store_uint(seqno, 32)
-      .store_uint(public_key, 256)
-      .store_slice(owner_address)
+     .store_uint(seqno, 32)
+     .store_uint(public_key, 256)
+     .store_slice(owner_address)
     .end_cell()
   );
 }
@@ -30,39 +31,34 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
   slice cs = in_msg_full.begin_parse();
   int flags = cs~load_uint(4);
-
   if (flags & 1) {
-    return ();
+    return();
   }
 
   slice sender_address = cs~load_msg_addr();
 
-  if (in_msg_body.slice_empty?()) {
-    return();
+  if (in_msg_body.slice_empty?()) { ;; pustoi li slice proverca
+    return();  
   }
 
-  (_, _, owner_address) = load_data();
+  (int seqno, int public_key, slice owner_address) = load_data();
 
   int op = in_msg_body~load_uint(32);
   int quiry_id = in_msg_body~load_uint(64);
 
-  if (op == opdeposit) {
-    return();
+  if (op == op::deposit) {
+    return();  ;; prinimait money and saverhaen contract
   }
 
-  if (op == op::accept_funds) {
-    throw_unless(900, msg_value >= 2000000000);
-    send_empty_message(msg_value, receiver_address, 1);
-    return ();
-  }
+
 
   if (op == op::transfer_msg_to_owner) {
-    ifnot (equla_slice(sender_address, owner_address)) {
+    ifnot (equal_slices(sender_address, owner_address)) {
       cell msg_cell = begin_cell().store_slice(in_msg_body).end_cell();
 
-      cel msg = begin_cell()
-                  .store_uint(18x0, 6)
-                  .store_slice(owner_address);
+      cell msg = begin_cell()
+                  .store_uint(0x18, 6)
+                  .store_slice(owner_address)
                   .store_coins(0)
                   .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
                   .store_slice(sender_address)
@@ -79,7 +75,7 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
     int send_amount = min(withdraw_amount, my_balance - min_tons_for_storage);
 
-    cel msg = begin_cell()
+    cell msg = begin_cell()
                 .store_uint(0x18, 6)
                 .store_slice(owner_address)
                 .store_coins(send_amount)
@@ -88,17 +84,17 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
     send_raw_message(msg, 1);
   }
 
-  if (op == op::update_code) {
-    cell mew_code = in_msg_body~load_ref();
-    set_code(nwe_code);
+  if(op == op::update_code) {
+    cell new_code = in_msg_body~load_ref(); ;; sozdaem cell
+    set_code(new_code); ;;visov new code
 
-    const old_code = get_c3();
-    set_c3(new_code.begin_parse(). bless());
+    cont old_code = get_c3(); ;; visov cell c3
+    set_c3(new_code.begin_parse().bless()); ;; lozim new code v c3 cell and racparsing
 
     throw(0);
   }
 
-  throw(oxffffff);
+  throw(0xffffff);
 }
 
 () recv_external(slice in_msg) impure {
@@ -110,17 +106,17 @@ const op::transfer_msg_to_owner = 0xdb9b8933;
 
   throw_unless(901, check_signature(hash, signature, public_key));
 
-  int msg_seqno = tmp_in_msg;
+  int msg_seqno = tmp_in_msg~load_uint(32);
 
   throw_unless(902, msg_seqno == seqno);
 
   accept_message();
   tmp_in_msg~touch();
 
-  store_data(seno + 1, public_key, owner_address);
+  store_data(seqno + 1, public_key, owner_address);
 }
 
-int get_seno() method_id {
+int get_seqno() method_id {
   (int seqno, _, _) = load_data();
   return seqno;
 }
@@ -129,3 +125,4 @@ slice get_owner() method_id {
   (_, _, slice owner_address) = load_data();
   return owner_address;
 }
+
